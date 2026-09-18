@@ -1,0 +1,6 @@
+{
+  "name": "ZÉLIA Parfums",
+  "description": "A scent that lingers long after you leave. Discover premium luxury fragrances by ZÉLIA with warm beige, champagne, and gold tones.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
