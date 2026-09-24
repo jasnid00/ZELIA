@@ -3,6 +3,7 @@ import { Sparkles, Eye, ShoppingBag, Heart, Star, Compass, Layers, Check, Zap } 
 import { Perfume } from '../types';
 import { COLLECTIONS } from '../data/perfumes';
 import { formatINR } from '../utils/currency';
+import { handleImageError } from '../utils/imageFallback';
 
 interface ExploreCollectionsProps {
   perfumes: Perfume[];
@@ -246,7 +247,7 @@ export const ExploreCollections: React.FC<ExploreCollectionsProps> = ({
                   <img
                     src={perfume.image}
                     alt={`${perfume.name} crystal presentation`}
-                    referrerPolicy="no-referrer"
+                    onError={(e) => handleImageError(e, perfume.name, perfume.accentColor)}
                     className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-700"
                   />
 

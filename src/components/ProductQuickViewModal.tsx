@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ShoppingBag, Heart, Star, Check, Sparkles, Shield, Clock, Wind, Zap } from 'lucide-react';
 import { Perfume } from '../types';
 import { formatINR } from '../utils/currency';
+import { handleImageError } from '../utils/imageFallback';
 
 interface ProductQuickViewModalProps {
   perfume: Perfume | null;
@@ -81,7 +82,7 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
               <img
                 src={perfume.image}
                 alt={perfume.name}
-                referrerPolicy="no-referrer"
+                onError={(e) => handleImageError(e, perfume.name, perfume.accentColor)}
                 className="w-full h-full object-cover object-center"
               />
 

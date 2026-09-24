@@ -4,6 +4,7 @@ import { SLIDESHOW_ADS } from '../data/campaignAds';
 import { PERFUMES } from '../data/perfumes';
 import { Perfume } from '../types';
 import { formatINR } from '../utils/currency';
+import { handleImageError } from '../utils/imageFallback';
 
 interface HeroSlideshowAdsProps {
   onShopNow: () => void;
@@ -108,7 +109,7 @@ export const HeroSlideshowAds: React.FC<HeroSlideshowAdsProps> = ({
             key={currentAd.id}
             src={currentAd.celebrityPhoto}
             alt={`${currentAd.celebrityName} for ${currentAd.headline} luxury perfume ad`}
-            referrerPolicy="no-referrer"
+            onError={(e) => handleImageError(e, currentAd.perfumeName, currentAd.accentColor)}
             className="w-full h-full object-cover object-center scale-105 animate-ken-burns transition-all duration-1000 filter brightness-75 contrast-110"
           />
           {/* Seductive cinematic multi-layer gradient */}
@@ -169,7 +170,7 @@ export const HeroSlideshowAds: React.FC<HeroSlideshowAdsProps> = ({
                   <img
                     src={currentAd.celebrityPhoto}
                     alt={currentAd.celebrityName}
-                    referrerPolicy="no-referrer"
+                    onError={(e) => handleImageError(e, currentAd.celebrityName, currentAd.accentColor)}
                     className="w-full h-full object-cover object-top"
                   />
                 </div>
@@ -256,7 +257,7 @@ export const HeroSlideshowAds: React.FC<HeroSlideshowAdsProps> = ({
                   <img
                     src={matchedPerfume.image}
                     alt={matchedPerfume.name}
-                    referrerPolicy="no-referrer"
+                    onError={(e) => handleImageError(e, matchedPerfume.name, matchedPerfume.accentColor)}
                     className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute bottom-2 left-2 right-2 p-2 bg-black/70 backdrop-blur-md rounded-xl text-center border border-white/10">

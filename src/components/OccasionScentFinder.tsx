@@ -3,6 +3,7 @@ import { OCCASION_GUIDES, PERFUMES } from '../data/perfumes';
 import { formatINR } from '../utils/currency';
 import { Perfume, OccasionGuide } from '../types';
 import { Sparkles, Gift, Heart, Sun, Shirt, Compass, ShoppingBag, Zap, ArrowRight, Check } from 'lucide-react';
+import { handleImageError } from '../utils/imageFallback';
 
 interface OccasionScentFinderProps {
   onAddToCart: (perfume: Perfume, volume?: string, quantity?: number) => void;
@@ -87,7 +88,7 @@ export const OccasionScentFinder: React.FC<OccasionScentFinderProps> = ({
             <img
               src={currentGuide.photo}
               alt={currentGuide.title}
-              referrerPolicy="no-referrer"
+              onError={(e) => handleImageError(e, currentGuide.title)}
               className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-700"
             />
             {/* Gradient Overlay */}
@@ -162,7 +163,7 @@ export const OccasionScentFinder: React.FC<OccasionScentFinderProps> = ({
                   <img
                     src={matchedPerfume.image}
                     alt={matchedPerfume.name}
-                    referrerPolicy="no-referrer"
+                    onError={(e) => handleImageError(e, matchedPerfume.name, matchedPerfume.accentColor)}
                     className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform"
                   />
                 </div>

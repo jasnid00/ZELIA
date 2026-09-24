@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ShoppingBag, Trash2, Plus, Minus, Sparkles, Gift, CheckCircle2, Shield, ArrowRight } from 'lucide-react';
 import { CartItem } from '../types';
 import { formatINR } from '../utils/currency';
+import { handleImageError } from '../utils/imageFallback';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -177,7 +178,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                         <img
                           src={item.perfume.image}
                           alt={item.perfume.name}
-                          referrerPolicy="no-referrer"
+                          onError={(e) => handleImageError(e, item.perfume.name, item.perfume.accentColor)}
                           className="w-full h-full object-cover"
                         />
                       </div>

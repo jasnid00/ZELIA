@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ShoppingBag, Eye, Heart, Star, Sparkles, Check, Droplets, Zap, Flame, Tag } from 'lucide-react';
 import { Perfume } from '../types';
 import { formatINR } from '../utils/currency';
+import { handleImageError } from '../utils/imageFallback';
 
 interface FeaturedPerfumesProps {
   perfumes: Perfume[];
@@ -281,7 +282,7 @@ export const FeaturedPerfumes: React.FC<FeaturedPerfumesProps> = ({
                     <img
                       src={perfume.image}
                       alt={`${perfume.name} crystal flacon presentation by ZÉLIA`}
-                      referrerPolicy="no-referrer"
+                      onError={(e) => handleImageError(e, perfume.name, perfume.accentColor)}
                       className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-700"
                     />
 

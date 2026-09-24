@@ -4,6 +4,7 @@ import { HERO_IMAGE, PERFUMES } from '../data/perfumes';
 import { ZeliaLogo } from './ZeliaLogo';
 import { formatINR } from '../utils/currency';
 import { Perfume } from '../types';
+import { handleImageError } from '../utils/imageFallback';
 
 interface HeroProps {
   onShopNow: () => void;
@@ -160,7 +161,7 @@ export const Hero: React.FC<HeroProps> = ({
                 <img
                   src={HERO_IMAGE}
                   alt="ZÉLIA Haute Parfumerie signature bottle on champagne silk with white blossoms"
-                  referrerPolicy="no-referrer"
+                  onError={(e) => handleImageError(e, 'Lumina d’Or', '#D4AF37')}
                   className="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700 aspect-[16/12]"
                 />
                 

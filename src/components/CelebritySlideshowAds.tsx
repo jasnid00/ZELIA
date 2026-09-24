@@ -4,6 +4,7 @@ import { SLIDESHOW_ADS } from '../data/campaignAds';
 import { PERFUMES } from '../data/perfumes';
 import { Perfume } from '../types';
 import { formatINR } from '../utils/currency';
+import { handleImageError } from '../utils/imageFallback';
 
 interface CelebritySlideshowAdsProps {
   onAddToCart: (perfume: Perfume, volume?: string, quantity?: number) => void;
@@ -97,7 +98,7 @@ export const CelebritySlideshowAds: React.FC<CelebritySlideshowAdsProps> = ({
                     <img
                       src={ad.celebrityPhoto}
                       alt={ad.celebrityName}
-                      referrerPolicy="no-referrer"
+                      onError={(e) => handleImageError(e, ad.perfumeName, ad.accentColor)}
                       className="w-full h-full object-cover object-top"
                     />
                   </div>
@@ -122,7 +123,7 @@ export const CelebritySlideshowAds: React.FC<CelebritySlideshowAdsProps> = ({
               <img
                 src={currentAd.celebrityPhoto}
                 alt={`${currentAd.celebrityName} in ${currentAd.headline}`}
-                referrerPolicy="no-referrer"
+                onError={(e) => handleImageError(e, currentAd.perfumeName, currentAd.accentColor)}
                 className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-1000 filter brightness-90 contrast-110"
               />
               {/* Vignette & Gradients */}

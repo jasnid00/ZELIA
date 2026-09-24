@@ -3,6 +3,7 @@ import { X, Sparkles, ArrowRight, Check, RotateCcw, ShoppingBag, Eye } from 'luc
 import { PERFUMES } from '../data/perfumes';
 import { Perfume } from '../types';
 import { formatINR } from '../utils/currency';
+import { handleImageError } from '../utils/imageFallback';
 
 interface ScentFinderModalProps {
   isOpen: boolean;
@@ -182,7 +183,7 @@ export const ScentFinderModal: React.FC<ScentFinderModalProps> = ({
                 <img
                   src={matchedPerfume.image}
                   alt={matchedPerfume.name}
-                  referrerPolicy="no-referrer"
+                  onError={(e) => handleImageError(e, matchedPerfume.name, matchedPerfume.accentColor)}
                   className="w-full h-full object-cover"
                 />
               </div>

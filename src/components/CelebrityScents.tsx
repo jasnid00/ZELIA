@@ -3,6 +3,7 @@ import { CELEBRITY_PICKS, PERFUMES } from '../data/perfumes';
 import { formatINR } from '../utils/currency';
 import { Perfume, CelebrityPick } from '../types';
 import { Star, Sparkles, ShoppingBag, Zap, Eye, Quote, CheckCircle2 } from 'lucide-react';
+import { handleImageError } from '../utils/imageFallback';
 
 interface CelebrityScentsProps {
   onAddToCart: (perfume: Perfume, volume?: string, quantity?: number) => void;
@@ -69,7 +70,7 @@ export const CelebrityScents: React.FC<CelebrityScentsProps> = ({
                   <img
                     src={celeb.photo}
                     alt={celeb.celebrityName}
-                    referrerPolicy="no-referrer"
+                    onError={(e) => handleImageError(e, celeb.celebrityName)}
                     className="w-full h-full object-cover object-top"
                   />
                 </div>
@@ -90,7 +91,7 @@ export const CelebrityScents: React.FC<CelebrityScentsProps> = ({
             <img
               src={activePick.photo}
               alt={activePick.celebrityName}
-              referrerPolicy="no-referrer"
+              onError={(e) => handleImageError(e, activePick.celebrityName)}
               className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-700"
             />
             {/* Ambient vignette */}
@@ -136,7 +137,7 @@ export const CelebrityScents: React.FC<CelebrityScentsProps> = ({
                   <img
                     src={matchedPerfume.image}
                     alt={matchedPerfume.name}
-                    referrerPolicy="no-referrer"
+                    onError={(e) => handleImageError(e, matchedPerfume.name, matchedPerfume.accentColor)}
                     className="w-full h-full object-cover object-center transform group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Sparkles, Flower2, Droplets, Feather } from 'lucide-react';
 import { STORY_IMAGE } from '../data/perfumes';
+import { handleImageError } from '../utils/imageFallback';
 
 export const OurStory: React.FC = () => {
   return (
@@ -18,7 +19,7 @@ export const OurStory: React.FC = () => {
               <img
                 src={STORY_IMAGE}
                 alt="ZÉLIA Master perfumer formulating botanical extractions on atelier table"
-                referrerPolicy="no-referrer"
+                onError={(e) => handleImageError(e, 'L’Atelier ZÉLIA')}
                 className="w-full h-auto object-cover aspect-[4/3] hover:scale-105 transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#2C241E]/40 via-transparent to-transparent pointer-events-none" />

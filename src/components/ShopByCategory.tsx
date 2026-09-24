@@ -1,6 +1,7 @@
 import React from 'react';
 import { SHOP_BY_CATEGORIES, CategoryItem } from '../data/perfumes';
 import { Sparkles, ArrowRight } from 'lucide-react';
+import { handleImageError } from '../utils/imageFallback';
 
 interface ShopByCategoryProps {
   selectedCategory: string;
@@ -62,7 +63,7 @@ export const ShopByCategory: React.FC<ShopByCategoryProps> = ({
                     <img
                       src={cat.image}
                       alt={cat.name}
-                      referrerPolicy="no-referrer"
+                      onError={(e) => handleImageError(e, cat.name)}
                       className="w-full h-full object-cover object-center transform group-hover:scale-110 transition-transform duration-500"
                     />
                   </div>

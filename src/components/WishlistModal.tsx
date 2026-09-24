@@ -2,6 +2,7 @@ import React from 'react';
 import { X, Heart, ShoppingBag, Eye, Trash2 } from 'lucide-react';
 import { Perfume } from '../types';
 import { formatINR } from '../utils/currency';
+import { handleImageError } from '../utils/imageFallback';
 
 interface WishlistModalProps {
   isOpen: boolean;
@@ -64,7 +65,7 @@ export const WishlistModal: React.FC<WishlistModalProps> = ({
                     <img
                       src={perfume.image}
                       alt={perfume.name}
-                      referrerPolicy="no-referrer"
+                      onError={(e) => handleImageError(e, perfume.name, perfume.accentColor)}
                       className="w-full h-full object-cover"
                     />
                   </div>
