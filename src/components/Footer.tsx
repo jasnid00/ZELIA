@@ -2,7 +2,11 @@ import React from 'react';
 import { Sparkles, Instagram, Facebook, Heart, ArrowUp } from 'lucide-react';
 import { ZeliaLogo } from './ZeliaLogo';
 
-export const Footer: React.FC = () => {
+interface FooterProps {
+  onOpenAdmin?: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onOpenAdmin }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -150,6 +154,17 @@ export const Footer: React.FC = () => {
           <div className="flex items-center gap-6">
             <span>Cruelty-Free & Sustainable</span>
             <span>•</span>
+            {onOpenAdmin && (
+              <>
+                <button
+                  onClick={onOpenAdmin}
+                  className="text-[#D8C3A5] hover:text-[#C5A059] transition-colors cursor-pointer"
+                >
+                  Atelier Administration
+                </button>
+                <span>•</span>
+              </>
+            )}
             <button
               onClick={scrollToTop}
               className="inline-flex items-center gap-1.5 text-[#C5A059] hover:underline cursor-pointer"

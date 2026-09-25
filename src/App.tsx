@@ -21,12 +21,23 @@ import { ProductQuickViewModal } from './components/ProductQuickViewModal';
 import { CartDrawer } from './components/CartDrawer';
 import { WishlistModal } from './components/WishlistModal';
 import { ScentFinderModal } from './components/ScentFinderModal';
-import { PERFUMES } from './data/perfumes';
 import { Perfume, CartItem } from './types';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { formatINR } from './utils/currency';
+import { AdminDataProvider, useAdminData } from './context/AdminDataContext';
+import { AdminDashboard } from './components/admin/AdminDashboard';
 
-export default function App() {
+function ZeliaStorefront() {
+  const { perfumes, addOrder, addMessage, websiteContent } = useAdminData();
+
+  // View state: 'store' | 'admin'
+  const [viewMode, setViewMode] = useState<'store' | 'admin'>(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#admin') {
+      return 'admin';
+    }
+    return 'store';
+  });
+
   // Category filter state
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedBudget, setSelectedBudget] = useState<string | null>(null);
@@ -39,14 +50,13 @@ export default function App() {
     } catch {
       // ignore
     }
-    // Pre-populate with one signature flacon priced in INR
-    const initialPerfume = PERFUMES[0];
+    const initialPerfume = perfumes[0];
     return [
       {
         perfume: initialPerfume,
         quantity: 1,
         selectedVolume: '100ml',
-        price: initialPerfume.price, // 7999 INR
+        price: initialPerfume?.price || 7999,
       }
     ];
   });
@@ -72,6 +82,19 @@ export default function App() {
   // Toast notification
   const [toastMessage, setToastMessage] = useState<{ text: string; icon: 'cart' | 'heart' } | null>(null);
 
+  // URL Hash Sync for #admin
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#admin') {
+        setViewMode('admin');
+      } else if (viewMode === 'admin') {
+        setViewMode('store');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [viewMode]);
+
   // Sync to local storage
   useEffect(() => {
     try {
@@ -92,11 +115,11 @@ export default function App() {
   const showToast = (text: string, icon: 'cart' | 'heart' = 'cart') => {
     setToastMessage({ text, icon });
     setTimeout(() => {
-      setToastMessage(null);
-    }, 3000);
+      setToastMessage(null), 3000;
+    });
   };
 
-  // Add to Cart handler with exact size pricing in Indian Rupees
+  // Add to Cart handler
   const handleAddToCart = (perfume: Perfume, volume: string = '100ml', quantity: number = 1) => {
     let unitPrice = perfume.price;
     const matchedSize = perfume.sizes?.find((s) => s.ml === volume);
@@ -126,13 +149,11 @@ export default function App() {
     showToast(`${perfume.name} (${volume}) added to bag • ${formatINR(unitPrice)}`, 'cart');
   };
 
-  // Buy Now handler: adds to bag and immediately opens checkout drawer
   const handleBuyNow = (perfume: Perfume, volume: string = '100ml') => {
     handleAddToCart(perfume, volume, 1);
     setIsCartOpen(true);
   };
 
-  // Category selection handler with smooth scroll to catalog
   const handleCategorySelect = (categoryKey: string) => {
     setSelectedCategory(categoryKey);
     const el = document.getElementById('featured-perfumes');
@@ -141,7 +162,6 @@ export default function App() {
     }
   };
 
-  // Budget selection handler
   const handleBudgetSelect = (budgetId: string | null) => {
     setSelectedBudget(budgetId);
     const el = document.getElementById('featured-perfumes');
@@ -150,7 +170,6 @@ export default function App() {
     }
   };
 
-  // Update quantity in cart
   const handleUpdateQuantity = (index: number, newQty: number) => {
     if (newQty <= 0) {
       handleRemoveFromCart(index);
@@ -171,10 +190,9 @@ export default function App() {
     setCartItems([]);
   };
 
-  // Wishlist toggle
   const handleToggleWishlist = (perfumeId: string) => {
     const exists = wishlistIds.includes(perfumeId);
-    const targetPerfume = PERFUMES.find((p) => p.id === perfumeId);
+    const targetPerfume = perfumes.find((p) => p.id === perfumeId);
     if (exists) {
       setWishlistIds((prev) => prev.filter((id) => id !== perfumeId));
       if (targetPerfume) showToast(`Removed ${targetPerfume.name} from saved items`, 'heart');
@@ -184,9 +202,8 @@ export default function App() {
     }
   };
 
-  const wishlistPerfumes = PERFUMES.filter((p) => wishlistIds.includes(p.id));
+  const wishlistPerfumes = perfumes.filter((p) => wishlistIds.includes(p.id));
 
-  // Navigation helpers
   const handleShopNow = () => {
     const el = document.getElementById('featured-perfumes');
     if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -209,8 +226,37 @@ export default function App() {
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const handleSwitchToAdmin = () => {
+    window.location.hash = 'admin';
+    setViewMode('admin');
+  };
+
+  const handleSwitchToStore = () => {
+    window.location.hash = '';
+    setViewMode('store');
+  };
+
+  // If in Admin Mode, render the full luxury Admin Dashboard
+  if (viewMode === 'admin') {
+    return <AdminDashboard onSwitchToStore={handleSwitchToStore} />;
+  }
+
+  // Otherwise, render Storefront
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF7F2] text-[#2C241E]">
+      {/* Floating Admin Mode Quick Launcher Button */}
+      <div className="fixed bottom-6 left-6 z-40">
+        <button
+          onClick={handleSwitchToAdmin}
+          className="px-4 py-2.5 bg-[#1C1714] text-[#D4AF37] hover:text-white border border-[#D4AF37]/50 rounded-2xl shadow-2xl flex items-center gap-2.5 text-xs font-semibold tracking-wider uppercase transition-all hover:scale-105 cursor-pointer backdrop-blur-md"
+          title="Open Maison ZÉLIA Modern Admin Dashboard"
+        >
+          <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
+          <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
+          <span>Admin Dashboard</span>
+        </button>
+      </div>
+
       {/* Toast feedback pill */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-[#2C241E] text-white px-5 py-3 rounded-2xl shadow-2xl border border-[#D4AF37]/60 flex items-center gap-3 animate-fade-in text-xs tracking-wider">
@@ -223,18 +269,20 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Navigation Header with Rotating Announcement Slider */}
+      {/* Main Navigation Header with Rotating Announcement Slider & Admin Portal Link */}
       <Navbar
         cartItems={cartItems}
         wishlistCount={wishlistIds.length}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenWishlist={() => setIsWishlistOpen(true)}
         onOpenQuiz={() => setIsQuizOpen(true)}
+        onOpenAdmin={handleSwitchToAdmin}
         onSearchChange={(q) => setSearchQuery(q)}
+        customAnnouncements={websiteContent.announcements}
       />
 
       <main className="flex-grow">
-        {/* FridayCharm-style Hero Slideshow Ads with Sexy Celebrity Campaigns */}
+        {/* Hero Slideshow Ads with Celebrity Campaigns */}
         <HeroSlideshowAds
           onShopNow={handleShopNow}
           onExploreCollection={handleExploreCollection}
@@ -243,16 +291,16 @@ export default function App() {
           onQuickView={(p) => setQuickViewPerfume(p)}
         />
 
-        {/* FridayCharm-style Authenticity & Trust Guarantees Bar */}
+        {/* Authenticity & Trust Guarantees Bar */}
         <AuthenticGuaranteesBar />
 
-        {/* Circular Categories Grid (Matching FridayCharm category circles) */}
+        {/* Circular Categories Grid */}
         <ShopByCategory
           selectedCategory={selectedCategory}
           onSelectCategory={handleCategorySelect}
         />
 
-        {/* FridayCharm-style Dedicated Celebrity Seduction Slideshow Ads Banner */}
+        {/* Celebrity Slideshow Ads Banner */}
         <div id="campaign-ads">
           <CelebritySlideshowAds
             onAddToCart={handleAddToCart}
@@ -263,7 +311,7 @@ export default function App() {
           />
         </div>
 
-        {/* FridayCharm-style Shop by Budget in INR */}
+        {/* Shop by Budget in INR */}
         <div id="shop-budget">
           <ShopByBudget
             selectedBudget={selectedBudget}
@@ -271,7 +319,7 @@ export default function App() {
           />
         </div>
 
-        {/* FridayCharm-style Shop by Designer Brand / Haute Parfumerie Houses */}
+        {/* Shop by Designer Brand / Haute Parfumerie Houses */}
         <div id="designer-brands">
           <DesignerBrandsBar
             onSelectBrand={handleSelectBrand}
@@ -285,7 +333,7 @@ export default function App() {
 
         {/* Main Product Catalog with Categories, Best Sellers, Offers, ml Selectors & Dual CTAs */}
         <FeaturedPerfumes
-          perfumes={PERFUMES}
+          perfumes={perfumes}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
           onQuickView={(p) => setQuickViewPerfume(p)}
@@ -298,14 +346,14 @@ export default function App() {
           onClearBudget={() => setSelectedBudget(null)}
         />
 
-        {/* Celebrities Most Used Section with Photos, Scent Profiles, Quotes & Instant Actions */}
+        {/* Celebrities Most Used Section */}
         <CelebrityScents
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
           onQuickView={(p) => setQuickViewPerfume(p)}
         />
 
-        {/* Find the Perfect Scent for Every Occasion Guide with Photos (Wedding, Gifting, Season, Mood, Outfit) */}
+        {/* Occasion Scent Finder Guide */}
         <div id="occasion-finder">
           <OccasionScentFinder
             onAddToCart={handleAddToCart}
@@ -316,7 +364,7 @@ export default function App() {
 
         {/* Explore The 5 Complete Collections Showcase */}
         <ExploreCollections
-          perfumes={PERFUMES}
+          perfumes={perfumes}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
           onQuickView={(p) => setQuickViewPerfume(p)}
@@ -339,11 +387,24 @@ export default function App() {
         <CustomerReviews />
 
         {/* Contact Us & Boutique Concierge Section */}
-        <ContactSection />
+        <ContactSection
+          onSendMessage={(msg) => {
+            addMessage({
+              id: `msg-${Date.now()}`,
+              name: msg.name,
+              email: msg.email,
+              subject: msg.subject,
+              message: msg.message,
+              date: new Date().toISOString(),
+              status: 'Unread'
+            });
+            showToast('Your message has been received by the Atelier Concierge.');
+          }}
+        />
       </main>
 
-      {/* Luxury Footer */}
-      <Footer />
+      {/* Luxury Footer with Atelier Admin Access */}
+      <Footer onOpenAdmin={handleSwitchToAdmin} />
 
       {/* Modals & Slide-overs */}
       <ProductQuickViewModal
@@ -362,6 +423,10 @@ export default function App() {
         onUpdateQuantity={handleUpdateQuantity}
         onRemoveItem={handleRemoveFromCart}
         onClearCart={handleClearCart}
+        onOrderPlaced={(order) => {
+          addOrder(order);
+          showToast(`Order ${order.orderNumber} successfully registered with Maison ZÉLIA.`);
+        }}
       />
 
       <WishlistModal
@@ -380,5 +445,13 @@ export default function App() {
         onQuickView={(p) => setQuickViewPerfume(p)}
       />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AdminDataProvider>
+      <ZeliaStorefront />
+    </AdminDataProvider>
   );
 }

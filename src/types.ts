@@ -70,6 +70,7 @@ export interface Perfume {
   badge?: string;
   featured: boolean;
   inStock: boolean;
+  stockCount?: number;
   sizes?: SizeOption[];
   genderCategory?: 'men' | 'women' | 'unisex';
   isNewArrival?: boolean;
@@ -137,3 +138,125 @@ export interface ScentQuizAnswer {
   occasion?: string;
   preference?: string;
 }
+
+export type OrderStatus = 'Pending' | 'Confirmed' | 'Shipped' | 'Delivered' | 'Cancelled';
+
+export interface OrderItem {
+  perfumeId: string;
+  perfumeName: string;
+  volume: string;
+  quantity: number;
+  price: number;
+  image: string;
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  shippingAddress: {
+    address: string;
+    city: string;
+    pinCode: string;
+    state?: string;
+  };
+  items: OrderItem[];
+  subtotal: number;
+  discount: number;
+  shipping: number;
+  total: number;
+  paymentMethod: 'upi' | 'card' | 'cod';
+  paymentStatus: 'Paid' | 'Pending' | 'Refunded';
+  status: OrderStatus;
+  date: string;
+  trackingNumber?: string;
+  notes?: string;
+}
+
+export interface Customer {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  tier: 'Gold Reserve VIP' | 'Haute Member' | 'Connoisseur' | 'Member';
+  totalOrders: number;
+  totalSpent: number;
+  lastOrderDate: string;
+  status: 'Active' | 'Inactive';
+}
+
+export interface ProductCategory {
+  id: string;
+  name: string;
+  frenchName: string;
+  description: string;
+  itemCount: number;
+  status: 'Active' | 'Hidden';
+  image?: string;
+}
+
+export interface AdminReview {
+  id: string;
+  author: string;
+  perfumeName: string;
+  rating: number;
+  title: string;
+  comment: string;
+  date: string;
+  verified: boolean;
+  status: 'Approved' | 'Pending' | 'Hidden';
+  adminReply?: string;
+}
+
+export interface Offer {
+  id: string;
+  code: string;
+  discountPercent: number;
+  minSpend: number;
+  expiryDate: string;
+  usageCount: number;
+  status: 'Active' | 'Expired' | 'Paused';
+  description: string;
+}
+
+export interface InquiryMessage {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  subject: string;
+  message: string;
+  date: string;
+  status: 'Unread' | 'Read' | 'Replied';
+  reply?: string;
+}
+
+export interface WebsiteContent {
+  announcements: string[];
+  heroHeadline: string;
+  heroSubtext: string;
+  storyHeadline: string;
+  storyParagraph: string;
+  conciergePhone: string;
+  conciergeEmail: string;
+  boutiqueAddress: string;
+  boutiqueHours: string;
+}
+
+export interface AdminSettings {
+  boutiqueName: string;
+  currencySymbol: string;
+  currencyCode: string;
+  freeShippingThreshold: number;
+  standardShippingFee: number;
+  courierPartner: string;
+  taxRate: number;
+  lowStockThreshold: number;
+  notificationsEmail: string;
+  smsNotificationsEnabled: boolean;
+  orderEmailNotifications: boolean;
+}
+

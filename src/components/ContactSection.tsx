@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Sparkles, Send, CheckCircle2, Clock, MessageSquare } from 'lucide-react';
 
-export const ContactSection: React.FC = () => {
+interface ContactSectionProps {
+  onSendMessage?: (msg: { name: string; email: string; subject: string; message: string }) => void;
+}
+
+export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [inquiryType, setInquiryType] = useState('Personal Fragrance Consultation');
@@ -16,6 +20,14 @@ export const ContactSection: React.FC = () => {
     e.preventDefault();
     if (!name || !email || !message) return;
     setSubmitted(true);
+    if (onSendMessage) {
+      onSendMessage({
+        name,
+        email,
+        subject: inquiryType,
+        message
+      });
+    }
   };
 
   const handleNewsletter = (e: React.FormEvent) => {

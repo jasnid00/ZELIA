@@ -10,7 +10,9 @@ interface NavbarProps {
   onOpenCart: () => void;
   onOpenWishlist: () => void;
   onOpenQuiz: () => void;
+  onOpenAdmin?: () => void;
   onSearchChange?: (query: string) => void;
+  customAnnouncements?: string[];
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -19,13 +21,19 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCart,
   onOpenWishlist,
   onOpenQuiz,
+  onOpenAdmin,
   onSearchChange,
+  customAnnouncements,
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [announcementIndex, setAnnouncementIndex] = useState(0);
+
+  const activeAnnouncements = customAnnouncements && customAnnouncements.length > 0
+    ? customAnnouncements.map((text) => ({ tag: 'ATELIER', text }))
+    : TOP_ANNOUNCEMENTS;
 
   const totalCartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -40,10 +48,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   // Rotating announcement bar
   useEffect(() => {
     const interval = setInterval(() => {
-      setAnnouncementIndex((prev) => (prev + 1) % TOP_ANNOUNCEMENTS.length);
+      setAnnouncementIndex((prev) => (prev + 1) % activeAnnouncements.length);
     }, 4200);
     return () => clearInterval(interval);
-  }, []);
+  }, [activeAnnouncements.length]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { name: 'Concierge', href: '#contact-us' },
   ];
 
-  const currentAnnouncement = TOP_ANNOUNCEMENTS[announcementIndex];
+  const currentAnnouncement = activeAnnouncements[announcementIndex % activeAnnouncements.length] || activeAnnouncements[0];
 
   return (
     <header className="sticky top-0 z-40 w-full transition-all duration-300">
@@ -182,6 +190,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span>Scent Matcher</span>
             </button>
 
+            {/* Admin Portal Entry Button */}
+            {onOpenAdmin && (
+              <button
+                id="nav-admin-portal-btn"
+                onClick={onOpenAdmin}
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] tracking-[0.15em] uppercase font-semibold bg-[#2C241E] text-[#D4AF37] hover:bg-[#3E342B] border border-[#D4AF37]/40 transition-all cursor-pointer shadow-2xs"
+                title="Maison ZÉLIA Admin Dashboard"
+              >
+                <span>Admin Portal</span>
+              </button>
+            )}
+
             {/* Search Desktop Toggle */}
             <button
               id="desktop-search-toggle"
@@ -288,6 +308,17 @@ export const Navbar: React.FC<NavbarProps> = ({
               <Sparkles className="w-3.5 h-3.5 text-[#C5A059]" />
               Find My Scent
             </button>
+            {onOpenAdmin && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAdmin();
+                }}
+                className="w-full py-2.5 bg-[#FAF7F2] border border-[#D4AF37] text-[#9A7B38] text-xs uppercase tracking-[0.2em] font-semibold flex items-center justify-center gap-2"
+              >
+                <span>⚜️ Admin Portal</span>
+              </button>
+            )}
           </div>
         </div>
       )}

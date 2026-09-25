@@ -11,6 +11,7 @@ interface CartDrawerProps {
   onUpdateQuantity: (index: number, newQty: number) => void;
   onRemoveItem: (index: number) => void;
   onClearCart: () => void;
+  onOrderPlaced?: (order: any) => void;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -20,6 +21,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onUpdateQuantity,
   onRemoveItem,
   onClearCart,
+  onOrderPlaced,
 }) => {
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
@@ -34,6 +36,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [checkoutComplete, setCheckoutComplete] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card' | 'cod'>('upi');
+
+  // Checkout shipping fields
+  const [fullName, setFullName] = useState('Vikramaditya Singhania');
+  const [phone, setPhone] = useState('+91 99300 87123');
+  const [address, setAddress] = useState('Altamount Road, Penthouse 18B');
+  const [city, setCity] = useState('Mumbai');
+  const [pinCode, setPinCode] = useState('400026');
 
   if (!isOpen) return null;
 
@@ -85,6 +94,42 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const handleCompleteOrder = (e: React.FormEvent) => {
     e.preventDefault();
     setCheckoutComplete(true);
+
+    if (onOrderPlaced) {
+      const orderNumber = `ZEL-${Math.floor(1000 + Math.random() * 9000)}`;
+      onOrderPlaced({
+        id: `ord-${Date.now()}`,
+        orderNumber,
+        customerName: fullName || 'Maison Patron',
+        customerEmail: `${(fullName || 'patron').toLowerCase().replace(/\s+/g, '.')}@luxury.in`,
+        customerPhone: phone || '+91 98765 43210',
+        shippingAddress: {
+          address: address || 'Boutique Residence',
+          city: city || 'Mumbai',
+          pinCode: pinCode || '400001',
+          state: 'Maharashtra'
+        },
+        items: cartItems.map((item) => ({
+          perfumeId: item.perfume.id,
+          perfumeName: item.perfume.name,
+          volume: item.selectedVolume,
+          quantity: item.quantity,
+          price: item.price,
+          image: item.perfume.image
+        })),
+        subtotal,
+        discount,
+        shipping: shippingCost,
+        total,
+        paymentMethod,
+        paymentStatus: paymentMethod === 'cod' ? 'Pending' : 'Paid',
+        status: 'Pending',
+        date: new Date().toISOString(),
+        trackingNumber: '',
+        notes: isGiftWrapped ? 'Complimentary wax-sealed gift wrapping requested.' : ''
+      });
+    }
+
     setTimeout(() => {
       onClearCart();
       setCheckoutComplete(false);
@@ -408,6 +453,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       type="text"
                       required
                       placeholder="e.g. Vikramaditya Singhania"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
                       className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none"
                     />
                   </div>
@@ -419,6 +466,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       type="tel"
                       required
                       placeholder="+91 98765 43210"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none"
                     />
                   </div>
@@ -432,6 +481,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     type="text"
                     required
                     placeholder="Apartment, Street, Landmark"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
                     className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none"
                   />
                 </div>
@@ -445,6 +496,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       type="text"
                       required
                       placeholder="Mumbai / Delhi / Bengaluru"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
                       className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none"
                     />
                   </div>
@@ -456,6 +509,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       type="text"
                       required
                       placeholder="e.g. 400001"
+                      value={pinCode}
+                      onChange={(e) => setPinCode(e.target.value)}
                       className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none"
                     />
                   </div>
