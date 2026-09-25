@@ -232,11 +232,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* Table Header */}
         <div className="p-5 sm:p-6 border-b border-[#E8DFD4] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h2 className="font-serif-luxury text-xl sm:text-2xl text-[#2C241E] font-medium tracking-wide">
-              Recent Orders & Dispatches
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="font-serif-luxury text-xl sm:text-2xl text-[#2C241E] font-medium tracking-wide">
+                Recent Orders & Dispatches
+              </h2>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10px] font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Live Cloud DB
+              </span>
+            </div>
             <p className="text-xs text-[#7A6A5D] mt-0.5">
-              Live orders placed by VIP patrons across India
+              Live orders placed by customers across India automatically synced to the central database
             </p>
           </div>
 

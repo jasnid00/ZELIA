@@ -17,7 +17,8 @@ import {
   MapPin,
   Phone,
   Mail,
-  PackageCheck
+  PackageCheck,
+  RefreshCw
 } from 'lucide-react';
 import { useAdminData } from '../../../context/AdminDataContext';
 import { Order, OrderStatus } from '../../../types';
@@ -33,10 +34,11 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
   initialSelectedOrderId,
   onClearSelectedOrder
 }) => {
-  const { orders, updateOrderStatus, deleteOrder } = useAdminData();
+  const { orders, updateOrderStatus, deleteOrder, refreshOrders, isBackendConnected, lastSyncedAt } = useAdminData();
 
   const [statusFilter, setStatusFilter] = useState<'All' | OrderStatus>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(() => {
     if (initialSelectedOrderId) {
       return orders.find((o) => o.id === initialSelectedOrderId) || null;
@@ -155,6 +157,20 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
 
         {/* Status Badges Summary */}
         <div className="flex flex-wrap items-center gap-2 text-xs">
+          <button
+            onClick={async () => {
+              setIsRefreshing(true);
+              await refreshOrders();
+              setTimeout(() => setIsRefreshing(false), 500);
+              showToast('Orders re-synchronized from central database.');
+            }}
+            disabled={isRefreshing}
+            className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#FAF7F2] border border-[#E8DFD4] text-[#2C241E] font-medium flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            title="Sync all customer orders from central database"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-[#9A7B38] ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Sync DB</span>
+          </button>
           <span className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 font-medium">
             {pendingCount} Pending Dispatch
           </span>

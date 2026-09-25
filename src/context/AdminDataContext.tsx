@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import {
   Perfume,
   Order,
@@ -24,19 +24,24 @@ import {
 } from '../data/adminInitialData';
 
 interface AdminDataContextType {
+  // Sync status
+  isBackendConnected: boolean;
+  lastSyncedAt: Date | null;
+  refreshOrders: () => Promise<void>;
+
   // Products
   perfumes: Perfume[];
   addPerfume: (perfume: Perfume) => void;
   updatePerfume: (id: string, updated: Partial<Perfume>) => void;
   deletePerfume: (id: string) => void;
 
-  // Orders
+  // Orders (Connected to Central Backend DB)
   orders: Order[];
-  addOrder: (order: Order) => void;
-  updateOrderStatus: (orderId: string, status: OrderStatus, trackingNumber?: string) => void;
-  deleteOrder: (orderId: string) => void;
+  addOrder: (order: Order) => Promise<void>;
+  updateOrderStatus: (orderId: string, status: OrderStatus, trackingNumber?: string) => Promise<void>;
+  deleteOrder: (orderId: string) => Promise<void>;
 
-  // Customers
+  // Customers (Connected to Central Backend DB)
   customers: Customer[];
   addCustomer: (customer: Customer) => void;
   updateCustomer: (id: string, updated: Partial<Customer>) => void;
@@ -58,11 +63,11 @@ interface AdminDataContextType {
   updateOffer: (id: string, updated: Partial<Offer>) => void;
   deleteOffer: (id: string) => void;
 
-  // Messages
+  // Messages (Connected to Central Backend DB)
   messages: InquiryMessage[];
-  addMessage: (message: InquiryMessage) => void;
-  updateMessageStatus: (id: string, status: 'Unread' | 'Read' | 'Replied', reply?: string) => void;
-  deleteMessage: (id: string) => void;
+  addMessage: (message: InquiryMessage) => Promise<void>;
+  updateMessageStatus: (id: string, status: 'Unread' | 'Read' | 'Replied', reply?: string) => Promise<void>;
+  deleteMessage: (id: string) => Promise<void>;
 
   // Website Content
   websiteContent: WebsiteContent;
@@ -79,6 +84,9 @@ interface AdminDataContextType {
 const AdminDataContext = createContext<AdminDataContextType | undefined>(undefined);
 
 export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean>(true);
+  const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+
   // Perfumes state
   const [perfumes, setPerfumes] = useState<Perfume[]>(() => {
     try {
@@ -90,14 +98,13 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } catch {
       // fallback
     }
-    // Enrich with initial stockCount if not present
     return PERFUMES.map((p, idx) => ({
       ...p,
       stockCount: p.stockCount ?? (idx === 0 ? 8 : idx === 3 ? 3 : 15 + ((idx * 7) % 20))
     }));
   });
 
-  // Orders state
+  // Orders state (Initialized from local cache, then immediately synchronized with central API)
   const [orders, setOrders] = useState<Order[]>(() => {
     try {
       const saved = localStorage.getItem('zelia_admin_orders');
@@ -207,77 +214,106 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return INITIAL_SETTINGS;
   });
 
-  // Persistence effects
+  // ================= CENTRAL BACKEND API SYNC =================
+  const fetchOrdersFromBackend = useCallback(async () => {
+    try {
+      const res = await fetch('/api/orders');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setOrders(json.data);
+          setIsBackendConnected(true);
+          setLastSyncedAt(new Date());
+          try {
+            localStorage.setItem('zelia_admin_orders', JSON.stringify(json.data));
+          } catch {}
+        }
+      }
+    } catch (err) {
+      // Offline or network error
+      setIsBackendConnected(false);
+    }
+  }, []);
+
+  const fetchCustomersFromBackend = useCallback(async () => {
+    try {
+      const res = await fetch('/api/customers');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setCustomers(json.data);
+          try {
+            localStorage.setItem('zelia_admin_customers', JSON.stringify(json.data));
+          } catch {}
+        }
+      }
+    } catch {}
+  }, []);
+
+  const fetchMessagesFromBackend = useCallback(async () => {
+    try {
+      const res = await fetch('/api/messages');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data)) {
+          setMessages(json.data);
+          try {
+            localStorage.setItem('zelia_admin_messages', JSON.stringify(json.data));
+          } catch {}
+        }
+      }
+    } catch {}
+  }, []);
+
+  // Initial fetch and automatic background polling every 4 seconds
+  useEffect(() => {
+    fetchOrdersFromBackend();
+    fetchCustomersFromBackend();
+    fetchMessagesFromBackend();
+
+    const interval = setInterval(() => {
+      fetchOrdersFromBackend();
+      fetchCustomersFromBackend();
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [fetchOrdersFromBackend, fetchCustomersFromBackend, fetchMessagesFromBackend]);
+
+  // Persistence effects for local cache
   useEffect(() => {
     try {
       localStorage.setItem('zelia_perfumes', JSON.stringify(perfumes));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [perfumes]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('zelia_admin_orders', JSON.stringify(orders));
-    } catch {
-      // ignore
-    }
-  }, [orders]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('zelia_admin_customers', JSON.stringify(customers));
-    } catch {
-      // ignore
-    }
-  }, [customers]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem('zelia_admin_categories', JSON.stringify(categories));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [categories]);
 
   useEffect(() => {
     try {
       localStorage.setItem('zelia_admin_reviews', JSON.stringify(reviews));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [reviews]);
 
   useEffect(() => {
     try {
       localStorage.setItem('zelia_admin_offers', JSON.stringify(offers));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [offers]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('zelia_admin_messages', JSON.stringify(messages));
-    } catch {
-      // ignore
-    }
-  }, [messages]);
-
-  useEffect(() => {
-    try {
       localStorage.setItem('zelia_admin_website_content', JSON.stringify(websiteContent));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [websiteContent]);
 
   useEffect(() => {
     try {
       localStorage.setItem('zelia_admin_settings', JSON.stringify(settings));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, [settings]);
 
   // Handlers for Products
@@ -295,42 +331,40 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setPerfumes((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // Handlers for Orders
-  const addOrder = (newOrder: Order) => {
+  // Handlers for Orders (Central Database Connected)
+  const addOrder = async (newOrder: Order) => {
+    // 1. Optimistic update
     setOrders((prev) => [newOrder, ...prev]);
-    // Also check if customer exists, or add/update customer
-    setCustomers((prev) => {
-      const existing = prev.find((c) => c.email.toLowerCase() === newOrder.customerEmail.toLowerCase());
-      if (existing) {
-        return prev.map((c) =>
-          c.id === existing.id
-            ? {
-                ...c,
-                totalOrders: c.totalOrders + 1,
-                totalSpent: c.totalSpent + newOrder.total,
-                lastOrderDate: new Date().toISOString().split('T')[0]
-              }
-            : c
-        );
-      } else {
-        const newCustomer: Customer = {
-          id: `cust-${Date.now()}`,
-          name: newOrder.customerName,
-          email: newOrder.customerEmail,
-          phone: newOrder.customerPhone,
-          city: newOrder.shippingAddress.city,
-          tier: newOrder.total > 15000 ? 'Gold Reserve VIP' : 'Member',
-          totalOrders: 1,
-          totalSpent: newOrder.total,
-          lastOrderDate: new Date().toISOString().split('T')[0],
-          status: 'Active'
-        };
-        return [newCustomer, ...prev];
+
+    // 2. Post to central server database
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newOrder)
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          setOrders((prev) =>
+            prev.map((o) => (o.id === newOrder.id ? json.data : o))
+          );
+          setIsBackendConnected(true);
+          setLastSyncedAt(new Date());
+          fetchCustomersFromBackend();
+        }
       }
-    });
+    } catch (err) {
+      console.error('Error posting order to central database:', err);
+    }
   };
 
-  const updateOrderStatus = (orderId: string, status: OrderStatus, trackingNumber?: string) => {
+  const updateOrderStatus = async (
+    orderId: string,
+    status: OrderStatus,
+    trackingNumber?: string
+  ) => {
+    // 1. Optimistic update
     setOrders((prev) =>
       prev.map((ord) => {
         if (ord.id === orderId) {
@@ -343,10 +377,32 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return ord;
       })
     );
+
+    // 2. Patch to central server database
+    try {
+      const res = await fetch(`/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, trackingNumber })
+      });
+      if (res.ok) {
+        setIsBackendConnected(true);
+        setLastSyncedAt(new Date());
+      }
+    } catch (err) {
+      console.error('Error updating order on central backend:', err);
+    }
   };
 
-  const deleteOrder = (orderId: string) => {
+  const deleteOrder = async (orderId: string) => {
     setOrders((prev) => prev.filter((ord) => ord.id !== orderId));
+    try {
+      await fetch(`/api/orders/${orderId}`, { method: 'DELETE' });
+      setIsBackendConnected(true);
+      setLastSyncedAt(new Date());
+    } catch (err) {
+      console.error('Error deleting order on central backend:', err);
+    }
   };
 
   // Handlers for Customers
@@ -414,32 +470,49 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setOffers((prev) => prev.filter((off) => off.id !== id));
   };
 
-  // Handlers for Messages
-  const addMessage = (message: InquiryMessage) => {
+  // Handlers for Messages (Central Database Connected)
+  const addMessage = async (message: InquiryMessage) => {
     setMessages((prev) => [message, ...prev]);
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(message)
+      });
+      if (res.ok) {
+        setIsBackendConnected(true);
+      }
+    } catch (err) {
+      console.error('Error saving message to central backend:', err);
+    }
   };
 
-  const updateMessageStatus = (
+  const updateMessageStatus = async (
     id: string,
     status: 'Unread' | 'Read' | 'Replied',
     reply?: string
   ) => {
     setMessages((prev) =>
-      prev.map((msg) => {
-        if (msg.id === id) {
-          return {
-            ...msg,
-            status,
-            reply: reply !== undefined ? reply : msg.reply
-          };
-        }
-        return msg;
-      })
+      prev.map((msg) => (msg.id === id ? { ...msg, status, reply: reply !== undefined ? reply : msg.reply } : msg))
     );
+    try {
+      await fetch(`/api/messages/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, reply })
+      });
+    } catch (err) {
+      console.error('Error updating message status on central backend:', err);
+    }
   };
 
-  const deleteMessage = (id: string) => {
+  const deleteMessage = async (id: string) => {
     setMessages((prev) => prev.filter((msg) => msg.id !== id));
+    try {
+      await fetch(`/api/messages/${id}`, { method: 'DELETE' });
+    } catch (err) {
+      console.error('Error deleting message on central backend:', err);
+    }
   };
 
   // Handlers for Website Content
@@ -482,6 +555,9 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   return (
     <AdminDataContext.Provider
       value={{
+        isBackendConnected,
+        lastSyncedAt,
+        refreshOrders: fetchOrdersFromBackend,
         perfumes,
         addPerfume,
         updatePerfume,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Search, Bell, ExternalLink, ShieldCheck, Check, AlertTriangle } from 'lucide-react';
+import { Menu, Search, Bell, ExternalLink, ShieldCheck, Check, AlertTriangle, RefreshCw, Database } from 'lucide-react';
 import { AdminTab } from './AdminSidebar';
 import { useAdminData } from '../../context/AdminDataContext';
 import { formatINR } from '../../utils/currency';
@@ -17,8 +17,9 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onSwitchToStore,
   onSelectTab
 }) => {
-  const { orders, perfumes, settings } = useAdminData();
+  const { orders, perfumes, settings, isBackendConnected, lastSyncedAt, refreshOrders } = useAdminData();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const pendingOrders = orders.filter((o) => o.status === 'Pending');
   const lowStockItems = perfumes.filter(
@@ -26,6 +27,12 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   );
 
   const totalAlerts = pendingOrders.length + lowStockItems.length;
+
+  const handleManualSync = async () => {
+    setIsRefreshing(true);
+    await refreshOrders();
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   const tabTitles: Record<AdminTab, { title: string; subtitle: string }> = {
     dashboard: { title: 'Executive Dashboard', subtitle: 'Overview of sales, luxury flacon inventory & royal clientele' },
@@ -68,6 +75,22 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
       {/* Right zone: Actions, Notifications & Storefront Link */}
       <div className="flex items-center gap-2.5 sm:gap-3">
+        {/* Central Database Live Indicator */}
+        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-[#E8DFD4] text-xs">
+          <span className={`w-2 h-2 rounded-full ${isBackendConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+          <span className="text-[#6E5D53] font-medium">
+            {isBackendConnected ? 'Central DB Connected' : 'Reconnecting DB...'}
+          </span>
+          <button
+            onClick={handleManualSync}
+            disabled={isRefreshing}
+            className="p-1 hover:text-[#D4AF37] transition-colors cursor-pointer text-[#7A6A5D]"
+            title="Sync latest customer orders from database"
+          >
+            <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin text-[#D4AF37]' : ''}`} />
+          </button>
+        </div>
+
         {/* Quick Return to Store Button */}
         <button
           onClick={onSwitchToStore}

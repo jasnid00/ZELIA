@@ -1,0 +1,191 @@
+[
+  {
+    "id": "ord-1001",
+    "orderNumber": "ZEL-9842",
+    "customerName": "Maharani Gayatri Devi",
+    "customerEmail": "gayatri.devi@heritage.in",
+    "customerPhone": "+91 98201 44552",
+    "shippingAddress": {
+      "address": "Suite 402, Rambagh Enclave, Civil Lines",
+      "city": "Jaipur",
+      "pinCode": "302006",
+      "state": "Rajasthan"
+    },
+    "items": [
+      {
+        "perfumeId": "zelia-gold-reserve",
+        "perfumeName": "Lumina d'Or - Haute Réserve",
+        "volume": "100ml",
+        "quantity": 1,
+        "price": 8999,
+        "image": "/src/assets/images/zelia_hero_perfume_1789635975720.jpg"
+      },
+      {
+        "perfumeId": "zelia-rose-eternelle",
+        "perfumeName": "Rose Éternelle",
+        "volume": "100ml",
+        "quantity": 1,
+        "price": 7499,
+        "image": "/src/assets/images/zelia_rose_eternelle_1789636002228.jpg"
+      }
+    ],
+    "subtotal": 16498,
+    "discount": 1649,
+    "shipping": 0,
+    "total": 14849,
+    "paymentMethod": "upi",
+    "paymentStatus": "Paid",
+    "status": "Pending",
+    "date": "2026-09-25T01:42:00Z",
+    "trackingNumber": "",
+    "notes": "Gift packaging requested with gold wax seal calligraphy tag."
+  },
+  {
+    "id": "ord-1002",
+    "orderNumber": "ZEL-9841",
+    "customerName": "Vikramaditya Singhania",
+    "customerEmail": "vikram.singhania@corp.in",
+    "customerPhone": "+91 99300 87123",
+    "shippingAddress": {
+      "address": "Altamount Road, Penthouse 18B",
+      "city": "Mumbai",
+      "pinCode": "400026",
+      "state": "Maharashtra"
+    },
+    "items": [
+      {
+        "perfumeId": "zelia-oud-celeste",
+        "perfumeName": "Oud Céleste",
+        "volume": "100ml",
+        "quantity": 1,
+        "price": 9499,
+        "image": "/src/assets/images/zelia_oud_celeste_1789636860028.jpg"
+      }
+    ],
+    "subtotal": 9499,
+    "discount": 0,
+    "shipping": 0,
+    "total": 9499,
+    "paymentMethod": "card",
+    "paymentStatus": "Paid",
+    "status": "Confirmed",
+    "date": "2026-09-24T22:15:00Z",
+    "trackingNumber": "BD-AIR-948271",
+    "notes": "Fragile handling for crystal flacon."
+  },
+  {
+    "id": "ord-1003",
+    "orderNumber": "ZEL-9840",
+    "customerName": "Meera Rajput",
+    "customerEmail": "meera.rajput@designhouse.com",
+    "customerPhone": "+91 98110 56234",
+    "shippingAddress": {
+      "address": "B-14 Golf Links",
+      "city": "New Delhi",
+      "pinCode": "110003",
+      "state": "Delhi"
+    },
+    "items": [
+      {
+        "perfumeId": "zelia-jasmin-nocturne",
+        "perfumeName": "Jasmin Nocturne",
+        "volume": "100ml",
+        "quantity": 1,
+        "price": 7999,
+        "image": "/src/assets/images/zelia_jasmin_nocturne_1789636890824.jpg"
+      },
+      {
+        "perfumeId": "zelia-nuit-vanille",
+        "perfumeName": "Nuit de Vanille Impériale",
+        "volume": "50ml",
+        "quantity": 1,
+        "price": 4999,
+        "image": "/src/assets/images/zelia_nuit_vanille_1789636057814.jpg"
+      }
+    ],
+    "subtotal": 12998,
+    "discount": 1300,
+    "shipping": 0,
+    "total": 11698,
+    "paymentMethod": "upi",
+    "paymentStatus": "Paid",
+    "status": "Shipped",
+    "date": "2026-09-24T14:30:00Z",
+    "trackingNumber": "DEL-EXP-772183",
+    "notes": "Dispatched via Bluedart Apex Express."
+  },
+  {
+    "id": "ord-1004",
+    "orderNumber": "ZEL-9839",
+    "customerName": "Arjun Kapoor",
+    "customerEmail": "arjun.k@venturecapital.io",
+    "customerPhone": "+91 97412 88901",
+    "shippingAddress": {
+      "address": "Villa 12, Palm Meadows, Whitefield",
+      "city": "Bengaluru",
+      "pinCode": "560066",
+      "state": "Karnataka"
+    },
+    "items": [
+      {
+        "perfumeId": "zelia-blanc-sublime",
+        "perfumeName": "Blanc Sublime",
+        "volume": "100ml",
+        "quantity": 2,
+        "price": 7999,
+        "image": "/src/assets/images/zelia_blanc_sublime_1789636015907.jpg"
+      }
+    ],
+    "subtotal": 15998,
+    "discount": 0,
+    "shipping": 0,
+    "total": 15998,
+    "paymentMethod": "card",
+    "paymentStatus": "Paid",
+    "status": "Delivered",
+    "date": "2026-09-23T11:05:00Z",
+    "trackingNumber": "BD-AIR-948102",
+    "notes": "Hand delivered to recipient with verification."
+  },
+  {
+    "id": "ord-1005",
+    "orderNumber": "ZEL-9838",
+    "customerName": "Natasha Poonawalla",
+    "customerEmail": "natasha.p@hauteliving.in",
+    "customerPhone": "+91 98220 33819",
+    "shippingAddress": {
+      "address": "Clover Highlands, Kondhwa",
+      "city": "Pune",
+      "pinCode": "411048",
+      "state": "Maharashtra"
+    },
+    "items": [
+      {
+        "perfumeId": "zelia-coffret-voyage",
+        "perfumeName": "Coffret Voyage Privé (5 x 15ml)",
+        "volume": "75ml Total",
+        "quantity": 1,
+        "price": 12499,
+        "image": "/src/assets/images/zelia_coffret_set_1789636874527.jpg"
+      },
+      {
+        "perfumeId": "zelia-cognac-amber",
+        "perfumeName": "Santal & Cognac Royale",
+        "volume": "100ml",
+        "quantity": 1,
+        "price": 8999,
+        "image": "/src/assets/images/zelia_cognac_amber_1789637885220.jpg"
+      }
+    ],
+    "subtotal": 21498,
+    "discount": 2150,
+    "shipping": 0,
+    "total": 19348,
+    "paymentMethod": "card",
+    "paymentStatus": "Paid",
+    "status": "Delivered",
+    "date": "2026-09-22T16:40:00Z",
+    "trackingNumber": "DEL-EXP-771920",
+    "notes": "VIP concierge delivery confirmed."
+  }
+]
