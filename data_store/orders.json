@@ -1,5 +1,38 @@
 [
   {
+    "id": "ord-1790329681311",
+    "orderNumber": "ZEL-9832",
+    "customerName": "Jasnid",
+    "customerEmail": "jasnid00@gmail.com",
+    "customerPhone": "+91 98950 12345",
+    "shippingAddress": {
+      "address": "Villa 4B, Marine Drive",
+      "city": "Kochi",
+      "pinCode": "682011",
+      "state": "Kerala"
+    },
+    "items": [
+      {
+        "perfumeId": "zelia-amber-solaris",
+        "perfumeName": "Amber Solaris Privé",
+        "volume": "100ml",
+        "quantity": 1,
+        "price": 7999,
+        "image": "/src/assets/images/zelia_amber_solaris_1789635989567.jpg"
+      }
+    ],
+    "subtotal": 7999,
+    "discount": 0,
+    "shipping": 0,
+    "total": 7999,
+    "paymentMethod": "upi",
+    "paymentStatus": "Paid",
+    "status": "Pending",
+    "date": "2026-09-25T09:48:01.311Z",
+    "trackingNumber": "",
+    "notes": ""
+  },
+  {
     "id": "ord-1001",
     "orderNumber": "ZEL-9842",
     "customerName": "Maharani Gayatri Devi",

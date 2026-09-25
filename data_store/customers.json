@@ -1,5 +1,17 @@
 [
   {
+    "id": "cust-1790329681312",
+    "name": "Jasnid",
+    "email": "jasnid00@gmail.com",
+    "phone": "+91 98950 12345",
+    "city": "Kochi",
+    "tier": "Member",
+    "totalOrders": 1,
+    "totalSpent": 7999,
+    "lastOrderDate": "2026-09-25",
+    "status": "Active"
+  },
+  {
     "id": "cust-1790328962165",
     "name": "Alia Bhatt",
     "email": "alia@bollywood.in",

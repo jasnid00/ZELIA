@@ -217,7 +217,10 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // ================= CENTRAL BACKEND API SYNC =================
   const fetchOrdersFromBackend = useCallback(async () => {
     try {
-      const res = await fetch('/api/orders');
+      const res = await fetch(`/api/orders?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
@@ -237,7 +240,10 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const fetchCustomersFromBackend = useCallback(async () => {
     try {
-      const res = await fetch('/api/customers');
+      const res = await fetch(`/api/customers?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
@@ -252,7 +258,10 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const fetchMessagesFromBackend = useCallback(async () => {
     try {
-      const res = await fetch('/api/messages');
+      const res = await fetch(`/api/messages?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+      });
       if (res.ok) {
         const json = await res.json();
         if (json.success && Array.isArray(json.data)) {
@@ -265,7 +274,50 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } catch {}
   }, []);
 
-  // Initial fetch and automatic background polling every 4 seconds
+  // Real-time Server-Sent Events (SSE) Stream Subscription
+  useEffect(() => {
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource('/api/orders/stream');
+      eventSource.onopen = () => {
+        setIsBackendConnected(true);
+      };
+      eventSource.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data);
+          if (payload.type === 'order_created' && payload.order) {
+            setOrders((prev) => {
+              const exists = prev.some(
+                (o) => o.id === payload.order.id || o.orderNumber === payload.order.orderNumber
+              );
+              if (exists) {
+                return prev.map((o) => (o.id === payload.order.id ? payload.order : o));
+              }
+              return [payload.order, ...prev];
+            });
+            setLastSyncedAt(new Date());
+            fetchCustomersFromBackend();
+          } else if (payload.type === 'order_updated' && payload.order) {
+            setOrders((prev) => prev.map((o) => (o.id === payload.order.id ? payload.order : o)));
+            setLastSyncedAt(new Date());
+          } else if (payload.type === 'order_deleted' && payload.orderId) {
+            setOrders((prev) => prev.filter((o) => o.id !== payload.orderId));
+            setLastSyncedAt(new Date());
+          }
+        } catch (err) {
+          console.error('Error handling order stream update:', err);
+        }
+      };
+    } catch (err) {
+      console.warn('SSE not supported or failed to connect, falling back to polling:', err);
+    }
+
+    return () => {
+      if (eventSource) eventSource.close();
+    };
+  }, [fetchCustomersFromBackend]);
+
+  // Initial fetch and automatic background polling every 2.5 seconds
   useEffect(() => {
     fetchOrdersFromBackend();
     fetchCustomersFromBackend();
@@ -274,7 +326,7 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const interval = setInterval(() => {
       fetchOrdersFromBackend();
       fetchCustomersFromBackend();
-    }, 4000);
+    }, 2500);
 
     return () => clearInterval(interval);
   }, [fetchOrdersFromBackend, fetchCustomersFromBackend, fetchMessagesFromBackend]);

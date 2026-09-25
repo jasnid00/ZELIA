@@ -36,13 +36,51 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [checkoutComplete, setCheckoutComplete] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card' | 'cod'>('upi');
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
-  // Checkout shipping fields
-  const [fullName, setFullName] = useState('Vikramaditya Singhania');
-  const [phone, setPhone] = useState('+91 99300 87123');
-  const [address, setAddress] = useState('Altamount Road, Penthouse 18B');
-  const [city, setCity] = useState('Mumbai');
-  const [pinCode, setPinCode] = useState('400026');
+  // Checkout customer & shipping fields with persistent local storage
+  const [email, setEmail] = useState(() => {
+    try {
+      return localStorage.getItem('zelia_checkout_email') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [fullName, setFullName] = useState(() => {
+    try {
+      return localStorage.getItem('zelia_checkout_name') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [phone, setPhone] = useState(() => {
+    try {
+      return localStorage.getItem('zelia_checkout_phone') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [address, setAddress] = useState(() => {
+    try {
+      return localStorage.getItem('zelia_checkout_address') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [city, setCity] = useState(() => {
+    try {
+      return localStorage.getItem('zelia_checkout_city') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [pinCode, setPinCode] = useState(() => {
+    try {
+      return localStorage.getItem('zelia_checkout_pincode') || '';
+    } catch {
+      return '';
+    }
+  });
 
   if (!isOpen) return null;
 
@@ -91,49 +129,86 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     'Oud Céleste (2ml)',
   ];
 
-  const handleCompleteOrder = (e: React.FormEvent) => {
+  const handleCompleteOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCheckoutComplete(true);
+    if (isSubmittingOrder) return;
+    setIsSubmittingOrder(true);
 
-    if (onOrderPlaced) {
-      const orderNumber = `ZEL-${Math.floor(1000 + Math.random() * 9000)}`;
-      onOrderPlaced({
-        id: `ord-${Date.now()}`,
-        orderNumber,
-        customerName: fullName || 'Maison Patron',
-        customerEmail: `${(fullName || 'patron').toLowerCase().replace(/\s+/g, '.')}@luxury.in`,
-        customerPhone: phone || '+91 98765 43210',
-        shippingAddress: {
-          address: address || 'Boutique Residence',
-          city: city || 'Mumbai',
-          pinCode: pinCode || '400001',
-          state: 'Maharashtra'
+    const enteredEmail = email.trim() || `${(fullName || 'patron').trim().toLowerCase().replace(/\s+/g, '.')}@gmail.com`;
+    const enteredName = fullName.trim() || 'Maison Patron';
+    const enteredPhone = phone.trim() || '+91 98765 43210';
+    const enteredAddress = address.trim() || 'Boutique Residence';
+    const enteredCity = city.trim() || 'Mumbai';
+    const enteredPinCode = pinCode.trim() || '400001';
+
+    // Save inputs to localStorage for future orders
+    try {
+      localStorage.setItem('zelia_checkout_email', enteredEmail);
+      localStorage.setItem('zelia_checkout_name', enteredName);
+      localStorage.setItem('zelia_checkout_phone', enteredPhone);
+      localStorage.setItem('zelia_checkout_address', enteredAddress);
+      localStorage.setItem('zelia_checkout_city', enteredCity);
+      localStorage.setItem('zelia_checkout_pincode', enteredPinCode);
+    } catch {}
+
+    const orderNumber = `ZEL-${Math.floor(1000 + Math.random() * 9000)}`;
+    const newOrderData = {
+      id: `ord-${Date.now()}`,
+      orderNumber,
+      customerName: enteredName,
+      customerEmail: enteredEmail,
+      customerPhone: enteredPhone,
+      shippingAddress: {
+        address: enteredAddress,
+        city: enteredCity,
+        pinCode: enteredPinCode,
+        state: 'Maharashtra'
+      },
+      items: cartItems.map((item) => ({
+        perfumeId: item.perfume.id,
+        perfumeName: item.perfume.name,
+        volume: item.selectedVolume,
+        quantity: item.quantity,
+        price: item.price,
+        image: item.perfume.image
+      })),
+      subtotal,
+      discount,
+      shipping: shippingCost,
+      total,
+      paymentMethod,
+      paymentStatus: paymentMethod === 'cod' ? 'Pending' : 'Paid',
+      status: 'Pending' as const,
+      date: new Date().toISOString(),
+      trackingNumber: '',
+      notes: isGiftWrapped ? 'Complimentary wax-sealed gift wrapping requested.' : ''
+    };
+
+    // 1. Send directly to central backend server with cache-busting
+    try {
+      await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
         },
-        items: cartItems.map((item) => ({
-          perfumeId: item.perfume.id,
-          perfumeName: item.perfume.name,
-          volume: item.selectedVolume,
-          quantity: item.quantity,
-          price: item.price,
-          image: item.perfume.image
-        })),
-        subtotal,
-        discount,
-        shipping: shippingCost,
-        total,
-        paymentMethod,
-        paymentStatus: paymentMethod === 'cod' ? 'Pending' : 'Paid',
-        status: 'Pending',
-        date: new Date().toISOString(),
-        trackingNumber: '',
-        notes: isGiftWrapped ? 'Complimentary wax-sealed gift wrapping requested.' : ''
+        body: JSON.stringify(newOrderData)
       });
+    } catch (err) {
+      console.warn('Central API fetch failed, proceeding with context:', err);
     }
 
+    // 2. Also dispatch to App state
+    if (onOrderPlaced) {
+      onOrderPlaced(newOrderData);
+    }
+
+    setCheckoutComplete(true);
     setTimeout(() => {
       onClearCart();
       setCheckoutComplete(false);
       setShowCheckoutModal(false);
+      setIsSubmittingOrder(false);
       onClose();
     }, 2800);
   };
@@ -447,20 +522,20 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-[11px] font-medium text-[#4A3F35] block mb-1">
-                      Full Name
+                      Full Name *
                     </label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Vikramaditya Singhania"
+                      placeholder="e.g. Jasnid or Priya Sharma"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
-                      className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none"
+                      className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none focus:border-[#D4AF37]"
                     />
                   </div>
                   <div>
                     <label className="text-[11px] font-medium text-[#4A3F35] block mb-1">
-                      Phone Number (for SMS Tracking)
+                      Phone Number (SMS tracking) *
                     </label>
                     <input
                       type="tel"
@@ -468,14 +543,29 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                       placeholder="+91 98765 43210"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none"
+                      className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none focus:border-[#D4AF37]"
                     />
                   </div>
                 </div>
 
+                {/* Email Address field */}
                 <div>
                   <label className="text-[11px] font-medium text-[#4A3F35] block mb-1">
-                    Delivery Address
+                    Email Address (For Order Confirmation & Dispatch Invoices) *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. jasnid00@gmail.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none focus:border-[#D4AF37]"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-[#4A3F35] block mb-1">
+                    Delivery Address *
                   </label>
                   <input
                     type="text"
@@ -483,7 +573,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     placeholder="Apartment, Street, Landmark"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none"
+                    className="w-full bg-white border border-[#D8C3A5] rounded-xl px-3 py-2 text-xs text-[#2C241E] focus:outline-none focus:border-[#D4AF37]"
                   />
                 </div>
 

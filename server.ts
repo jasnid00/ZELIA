@@ -21,20 +21,57 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Real-time SSE Clients registry for instant admin notifications
+  const sseClients = new Set<Response>();
+
+  function broadcastOrderChange(data: any) {
+    const payload = `data: ${JSON.stringify(data)}\n\n`;
+    for (const client of sseClients) {
+      try {
+        client.write(payload);
+      } catch {
+        sseClients.delete(client);
+      }
+    }
+  }
+
   // Health check
   app.get('/api/health', (req: Request, res: Response) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.json({
       status: 'ok',
       service: 'ZÉLIA Haute Parfumerie Central Backend',
       database: 'connected',
+      activeSseClients: sseClients.size,
       serverTime: new Date().toISOString()
     });
   });
 
+  // ================= SSE STREAM =================
+  // GET /api/orders/stream - Real-time push stream for Admin Panel
+  app.get('/api/orders/stream', (req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    if (res.flushHeaders) res.flushHeaders();
+
+    // Send connection greeting
+    res.write(`data: ${JSON.stringify({ type: 'connected', message: 'Maison ZÉLIA Live Order Stream' })}\n\n`);
+
+    sseClients.add(res);
+
+    req.on('close', () => {
+      sseClients.delete(res);
+    });
+  });
+
   // ================= ORDERS API =================
-  // GET /api/orders - Fetch all orders from central DB
+  // GET /api/orders - Fetch all orders from central DB with no caching
   app.get('/api/orders', (req: Request, res: Response) => {
     try {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       const orders = getOrders();
       res.json({ success: true, count: orders.length, data: orders });
     } catch (err: any) {
@@ -46,6 +83,7 @@ async function startServer() {
   // POST /api/orders - Create new order from customer storefront
   app.post('/api/orders', (req: Request, res: Response) => {
     try {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       const orderPayload: Partial<ServerOrder> = req.body;
 
       if (!orderPayload.customerName || !orderPayload.customerPhone || !orderPayload.items || orderPayload.items.length === 0) {
@@ -57,12 +95,17 @@ async function startServer() {
 
       const orderNumber = orderPayload.orderNumber || `ZEL-${Math.floor(1000 + Math.random() * 9000)}`;
 
+      // Use customer-provided email address directly
+      const customerEmail = (orderPayload.customerEmail && orderPayload.customerEmail.trim().length > 0)
+        ? orderPayload.customerEmail.trim()
+        : `${orderPayload.customerName.toLowerCase().replace(/\s+/g, '.')}@gmail.com`;
+
       const newOrder: ServerOrder = {
         id: orderPayload.id || `ord-${Date.now()}`,
         orderNumber,
-        customerName: orderPayload.customerName,
-        customerEmail: orderPayload.customerEmail || `${orderPayload.customerName.toLowerCase().replace(/\s+/g, '.')}@luxury.in`,
-        customerPhone: orderPayload.customerPhone,
+        customerName: orderPayload.customerName.trim(),
+        customerEmail,
+        customerPhone: orderPayload.customerPhone.trim(),
         shippingAddress: orderPayload.shippingAddress || {
           address: 'Boutique Residence',
           city: 'Mumbai',
@@ -83,7 +126,11 @@ async function startServer() {
       };
 
       const saved = createOrder(newOrder);
-      console.log(`[Order Created] ${saved.orderNumber} for ${saved.customerName} - Total: ₹${saved.total}`);
+      console.log(`[Order Created] ${saved.orderNumber} for ${saved.customerName} (${saved.customerEmail}) - ₹${saved.total}`);
+
+      // Push real-time event to all connected admin panels across all devices
+      broadcastOrderChange({ type: 'order_created', order: saved });
+
       res.status(201).json({ success: true, data: saved });
     } catch (err: any) {
       console.error('Error creating order:', err);
@@ -94,6 +141,7 @@ async function startServer() {
   // PATCH /api/orders/:id/status - Update order status (Pending, Confirmed, Shipped, Delivered, Cancelled)
   app.patch('/api/orders/:id/status', (req: Request, res: Response) => {
     try {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       const { id } = req.params;
       const { status, trackingNumber } = req.body;
 
@@ -107,6 +155,7 @@ async function startServer() {
       }
 
       console.log(`[Order Updated] ${updated.orderNumber} status -> ${status}`);
+      broadcastOrderChange({ type: 'order_updated', order: updated });
       res.json({ success: true, data: updated });
     } catch (err: any) {
       console.error('Error updating order:', err);
@@ -117,11 +166,13 @@ async function startServer() {
   // DELETE /api/orders/:id - Remove order from central DB
   app.delete('/api/orders/:id', (req: Request, res: Response) => {
     try {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
       const { id } = req.params;
       const ok = deleteOrder(id);
       if (!ok) {
         return res.status(404).json({ success: false, error: 'Order not found' });
       }
+      broadcastOrderChange({ type: 'order_deleted', orderId: id });
       res.json({ success: true, message: `Order ${id} removed` });
     } catch (err: any) {
       console.error('Error deleting order:', err);
